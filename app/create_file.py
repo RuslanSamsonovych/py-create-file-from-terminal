@@ -3,32 +3,51 @@ import os
 import sys
 
 
-cli_args = sys.argv[1:]
-file_name = ""
-dir_path = ""
+def path_create(path_parts: list[str]) -> str:
+    file_part = ""
+    dirs_part = []
+    mode = None
 
-if "-f" in cli_args:
-    index_f = cli_args.index("-f")
-    file_name = cli_args[index_f + 1]
-    del cli_args[index_f:index_f + 2]
-if "-d" in cli_args:
-    dir_path = os.path.join(*cli_args[1:])
-    os.makedirs(dir_path, exist_ok=True)
+    for arg in path_parts:
+        if arg == "-f":
+            mode = "file"
+        elif arg == "-d":
+            mode = "dir"
+        elif mode == "file":
+            file_part = arg
+        elif mode == "dir":
+            dirs_part.append(arg)
 
-if file_name:
-    user_data = []
-    line_number = 1
+    return os.path.join(*dirs_part, file_part)
+
+
+def collecting_data() -> list:
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n"
-    user_data.append(timestamp)
+    content = [timestamp]
+    line_number = 1
     while True:
         text_line = input("Enter content line: ")
         if text_line == "stop":
             break
-        user_data.append(f"{line_number} {text_line}\n")
+        content.append(f"{line_number} {text_line}\n")
         line_number += 1
 
-    full_path = os.path.join(dir_path, file_name)
+    return content
+
+
+def writing_file(full_path: str, content: list[str]) -> None:
     with open(full_path, "a") as file:
         if os.path.getsize(full_path):
             file.write("\n")
-        file.writelines(user_data)
+        file.writelines(content)
+
+
+cli_args = sys.argv[1:]
+path = path_create(cli_args)
+dir_path = os.path.dirname(path)
+file_name = os.path.basename(path)
+if dir_path:
+    os.makedirs(dir_path)
+if file_name:
+    data = collecting_data()
+    writing_file(path, data)
